@@ -1,0 +1,76 @@
+## 📖 Présentation
+
+NEXUS GEN est un serveur autonome en **Python pur** (aucune dépendance externe) qui fournit :
+
+- 🔍 **Analyse statique de code** sur ~57 langages et 250+ extensions (secrets codés en dur, patterns dangereux, TODO/FIXME, métriques)
+- ⚙️ **Génération de templates** serveur dans 12 langages natifs (Python, Rust, Java, Go, C, C++, C#, Ruby, PHP, Swift, Kotlin, TypeScript)
+- 🌐 **Recherche multi-source agrégée** (PyPI, npm, GitHub, Stack Overflow, Wikipédia, arXiv, Hugging Face, crates.io)
+- 🧠 **Knowledge Base persistante** (JSONL) enrichissable à la demande
+- ✏️ **Éditeur web intégré** avec buffer de 100 000 octets, sauvegarde/chargement et analyse en direct
+
+---
+
+## 🚀 Démarrage rapide
+
+```bash
+# Cloner le fork
+git clone https://github.com/.NEXUS-GEN-Fork-Moteur-multi-mod-le-diteur-100K/git
+cd nexus-gen-fork
+
+# Lancer (aucune installation nécessaire)
+python3 nexus_gen.py
+
+# Port personnalisé
+PORT=2401 python3 nexus_gen.py
+
+Puis ouvrir http://localhost:2400/ dans le navigateur.
+🔌 API
+GET
+Endpoint	Description
+/api/health	État du serveur, buffer, KB, générateurs
+/api/buffer	Vérification du buffer 100 Ko
+/api/languages	Registre des langages/extensions
+/api/niches	Niches de développement supportées
+/api/apis	Sources de recherche disponibles
+/api/kb	Knowledge Base (taille + 20 derniers items)
+/api/search?q=	Recherche multi-source parallèle
+/api/enrich?q=	Enrichit la KB avec les résultats de recherche
+/api/edit/list	Liste des fichiers de l'éditeur
+/api/edit/load?name=	Charge un fichier de l'éditeur
+POST
+Endpoint	Corps (JSON)	Description
+/api/generate	{prompt, langage, port}	Génère un template serveur
+/api/edit/save	{name, content}	Sauvegarde (max 100 000 octets)
+/api/analyze/code	{code, langage}	Analyse statique du code collé
+
+Exemple :
+curl -X POST http://localhost:2400/api/generate \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Serveur API REST", "langage": "rust", "port": 8080}'
+🏗️ Architecture
+nexus_gen.py
+├── §1  Registre des langages (57 langages, 250+ extensions)
+├── §2  Niches de développement (15 domaines)
+├── §3  Détection langage / niche
+├── §4  Patterns d'analyse (secrets, TODO, dangers par langage)
+├── §5  Client HTTP & intégrations API (8 sources)
+├── §6  Knowledge Base (JSONL persistant)
+├── §7  Générateurs de templates (12 langages)
+├── §8  Interface web (éditeur 100K inclus)
+├── §9  Handler HTTP (lecture/écriture par blocs de 100 Ko)
+├── §10 Serveur threaded (file d'attente 1000 connexions)
+└── §11 Point d'entrée
+🛠️ Contributions
+
+Les PR sont bienvenues. Champs d'amélioration identifiés :
+
+    Ajouter des tests automatisés (unittest/pytest)
+    Corriger la désactivation de la vérification TLS dans http_get
+    Authentification/tokens sur les endpoints sensibles
+    Suivre PEP 8 (nommage, docstrings anglais/français cohérent)
+    Dockerfile + requirements.txt (même si zéro dépendance)
+    CI GitHub Actions (lint, smoke test)
+
+📄 Licence
+
+Ce fork est distribué sous NEXUS-OPEN-3.0, conformément au projet original.
