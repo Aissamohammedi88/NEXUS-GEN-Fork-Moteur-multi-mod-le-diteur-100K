@@ -1,0 +1,1364 @@
+#!/usr/bin/env python3# -*- coding: utf-8 -*-
+"""
+NEXUS GEN v7.0.0 — MOTEUR MULTI-MODÈLE SCALABLE
+=================================================
+Port : 2400
+Buffer : 100 000 octets
+Éditeur : 100 000 caractères
+Auteur : Aissa Mohammedi (DGK)
+Licence : NEXUS-OPEN-3.0
+APIs : PyPI, npm, GitHub, StackOverflow, Wikipedia, arXiv,
+HuggingFace, Crates, DuckDuckGo
+Support : React/Redux/RN (ES7+), PHP (DevSense), GitHub Actions, Path Intellisense
+"""
+
+import os, sys, re, json, ast, time, ssl, socket, hashlib, threading
+import datetime, textwrap, subprocess, urllib.parse, urllib.request, urllib.error
+from pathlib import Path
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from socketserver import ThreadingMixIn
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from collections import Counter, defaultdict, OrderedDict
+from dataclasses import dataclass, field, asdict
+from typing import Any, Dict, List, Optional, Set, Tuple
+
+# ============================================================
+# CONSTANTES GLOBALES
+# ============================================================
+VERSION = "7.0.0"
+AUTEUR = "Aissa Mohammedi (DGK)"
+LICENCE = "NEXUS-OPEN-3.0"
+BUFFER_SIZE = 100000
+EDITOR_SIZE = 100000
+PORT = int(os.environ.get("PORT", 2400))
+
+HOME = Path(os.path.expanduser("~"))
+BASE = HOME / "Documents" / "nexus_gen"
+GENERATED = BASE / "generated"
+REPORTS = BASE / "reports"
+CACHE = BASE / "cache"
+KNOWLEDGE = BASE / "knowledge"
+for d in (BASE, GENERATED, REPORTS, CACHE, KNOWLEDGE):
+d.mkdir(parents=True, exist_ok=True)
+
+# ============================================================
+# SECTION 1 · LANGAGES (avec React/PHP/GitHub Actions)
+# ============================================================
+LANGAGES_SUPPORTES = {
+"python": [".py", ".pyw", ".pyi", ".pyx", ".pxd", ".pxi", ".pyz", ".pyc", ".pyd", ".pyo"],
+"rust": [".rs", ".rlib", ".rmeta"],
+"java": [".java", ".jar", ".class", ".jsp", ".jspx", ".jnlp"],
+"go": [".go", ".mod", ".sum"],
+"c": [".c", ".h", ".i", ".idb"],
+"cpp": [".cpp", ".cc", ".cxx", ".c++", ".hpp", ".hh", ".hxx", ".h++", ".ipp", ".inl", ".tcc", ".tpp"],
+"csharp": [".cs", ".csx", ".csproj", ".sln", ".razor", ".cshtml", ".xaml"],
+"ruby": [".rb", ".rbw", ".rake", ".gemspec", ".ru", ".erb", ".haml", ".slim"],
+"php": [".php", ".php3", ".php4", ".php5", ".php7", ".php8", ".phtml", ".phps", ".phpt"],
+"swift": [".swift", ".pbxproj"],
+"kotlin": [".kt", ".kts", ".ktm"],
+"typescript": [".ts", ".tsx", ".mts", ".cts", ".d.ts"],
+"javascript": [".js", ".mjs", ".cjs", ".jsx", ".es", ".es6"],
+"react": [".jsx", ".tsx", ".js", ".ts"],
+"redux": [".js", ".ts", ".jsx", ".tsx"],
+"react-native": [".js", ".jsx", ".ts", ".tsx", ".native.js"],
+"scala": [".scala", ".sc", ".sbt"],
+"clojure": [".clj", ".cljs", ".cljc", ".edn"],
+"elixir": [".ex", ".exs"],
+"erlang": [".erl", ".hrl"],
+"haskell": [".hs", ".lhs", ".cabal"],
+"ocaml": [".ml", ".mli", ".mll", ".mly"],
+"fsharp": [".fs", ".fsi", ".fsx", ".fsproj"],
+"lua": [".lua", ".rockspec"],
+"dart": [".dart"],
+"julia": [".jl"],
+"r": [".r", ".R", ".Rmd", ".Rnw"],
+"matlab": [".m", ".mat", ".fig", ".mlx"],
+"perl": [".pl", ".pm", ".t", ".pod", ".cgi"],
+"bash": [".sh", ".bash", ".zsh", ".ksh", ".csh", ".fish"],
+"powershell": [".ps1", ".psm1", ".psd1"],
+"html": [".html", ".htm", ".xhtml", ".shtml", ".ejs", ".hbs", ".mustache", ".pug", ".jade", ".twig"],
+"css": [".css", ".scss", ".sass", ".less", ".styl", ".stylus"],
+"sql": [".sql", ".ddl", ".dml", ".psql", ".mysql", ".plsql", ".tsql"],
+"yaml": [".yml", ".yaml"],
+"json": [".json", ".json5", ".jsonc", ".geojson", ".topojson", ".har"],
+"xml": [".xml", ".xsd", ".xsl", ".xslt", ".dtd", ".rss", ".atom", ".svg"],
+"markdown": [".md", ".markdown", ".mdown", ".mkd", ".mdx"],
+"solidity": [".sol"],
+"vyper": [".vy"],
+"cairo": [".cairo"],
+"move": [".move"],
+"cuda": [".cu", ".cuh"],
+"assembly": [".asm", ".s", ".S", ".nasm"],
+"fortran": [".f", ".f77", ".f90", ".f95", ".f03", ".f08"],
+"cobol": [".cob", ".cbl", ".cpy", ".cobol"],
+"pascal": [".pas", ".pp", ".dpr", ".dpk"],
+"ada": [".adb", ".ads", ".ada"],
+"lisp": [".lisp", ".lsp", ".cl", ".el"],
+"scheme": [".scm", ".ss", ".sls"],
+"prolog": [".pl", ".pro", ".prolog"],
+"nim": [".nim", ".nims"],
+"zig": [".zig"],
+"crystal": [".cr"],
+"v": [".v", ".vsh"],
+"graphql": [".graphql", ".gql"],
+"terraform": [".tf", ".tfvars", ".hcl"],
+"dockerfile": ["Dockerfile", ".dockerfile"],
+"makefile": ["Makefile", ".mk"],
+"cmake": ["CMakeLists.txt", ".cmake"],
+"nginx": [".nginx", ".nginxconf"],
+"ini": [".ini", ".cfg", ".conf", ".properties"],
+"toml": [".toml"],
+"env": [".env"],
+"github-actions": [".github/workflows/*.yml", ".github/workflows/*.yaml"],
+"path-intellisense": [".path", ".alias"],
+}
+
+TOTAL_EXTENSIONS = sum(len(v) for v in LANGAGES_SUPPORTES.values())
+EXT_TO_LANG = {}
+for lang, exts in LANGAGES_SUPPORTES.items():
+for ext in exts:
+EXT_TO_LANG[ext.lower()] = lang
+
+# ============================================================
+# SECTION 2 · NICHES (avec React, PHP, GH Actions)
+# ============================================================
+NICHES = {
+"web": {"nom": "Web / Backend / Fullstack",
+"langages": ["python","javascript","typescript","php","ruby","go","java","csharp","elixir","kotlin","scala","html","css","sql"],
+"outils": ["react","vue","angular","svelte","next.js","nuxt","django","flask","fastapi","rails","laravel","spring","express"]},
+"react": {"nom": "React / Redux / React-Native",
+"langages": ["javascript","typescript","react","redux","react-native"],
+"outils": ["react","redux","react-native","next.js","gatsby","expo","react-router","react-query","zustand"]},
+"php": {"nom": "PHP / Laravel / Symfony",
+"langages": ["php","html","javascript","sql"],
+"outils": ["laravel","symfony","wordpress","composer","phpunit","doctrine","twig","livewire"]},
+"devops": {"nom": "DevOps / Cloud / IaC / K8s / GitHub Actions",
+"langages": ["yaml","bash","python","go","dockerfile","terraform","github-actions"],
+"outils": ["kubernetes","helm","terraform","pulumi","docker","jenkins","githubactions","gitlabci","argocd","prometheus"]},
+"data": {"nom": "Data Science / ML / IA",
+"langages": ["python","r","julia","scala","sql"],
+"outils": ["pytorch","tensorflow","jax","keras","scikit-learn","pandas","numpy","polars","dask","ray","mlflow"]},
+"security": {"nom": "Cybersécurité / Pentest / Forensics",
+"langages": ["python","bash","powershell","c","cpp","assembly","sql"],
+"outils": ["nmap","burp","metasploit","wireshark","ghidra","ida","radare2","volatility","hashcat","john"]},
+"iot": {"nom": "IoT / Embedded / Firmware",
+"langages": ["c","cpp","python","rust","assembly","verilog","vhdl"],
+"outils": ["platformio","espidf","zephyr","freertos","riot","arm","riscv","mbed"]},
+"gamedev": {"nom": "Game Dev / Graphics / Shaders",
+"langages": ["cpp","csharp","rust","lua","glsl","hlsl","wgsl"],
+"outils": ["unity","unreal","godot","bevy","raylib","opengl","vulkan","directx","webgpu"]},
+"blockchain": {"nom": "Blockchain / Smart Contracts / Web3",
+"langages": ["solidity","vyper","cairo","move","rust","go","typescript"],
+"outils": ["ethereum","solana","polygon","hardhat","foundry","truffle","anchor","cosmwasm","ipfs"]},
+"bioinfo": {"nom": "Bio-informatique / Génomique",
+"langages": ["python","r","julia","perl","bash","c","cpp"],
+"outils": ["bioconductor","biopython","samtools","bcftools","gatk","bwa","star","nextflow","snakemake"]},
+"quantum": {"nom": "Quantique / HPC / Simulation",
+"langages": ["python","cpp","c","fortran","cuda","opencl"],
+"outils": ["qiskit","cirq","pennylane","mpi","openmp","cuda","rocm","sycl","kokkos"]},
+"cad": {"nom": "CAD / 3D / Métrologie / PCB",
+"langages": ["python","cpp","csharp","stl","step","dxf"],
+"outils": ["autocad","freecad","fusion360","solidworks","kicad","eagle","altium","gerber","spice"]},
+"math": {"nom": "Mathématiques / Physique",
+"langages": ["python","julia","r","matlab","fortran","latex"],
+"outils": ["numpy","scipy","sympy","sage","maxima","gap"]},
+"finance": {"nom": "Finance / Trading / Comptabilité",
+"langages": ["python","r","sql","c++"],
+"outils": ["quantlib","zipline","backtrader","ta-lib","pandas"]},
+"nlp": {"nom": "Linguistique / NLP / Traduction",
+"langages": ["python","r","julia"],
+"outils": ["spacy","nltk","stanza","gensim","fasttext","transformers","huggingface","sentencepiece"]},
+"network": {"nom": "Réseau / Télécoms / Protocoles",
+"langages": ["python","c","cpp","go","bash"],
+"outils": ["wireshark","tcpdump","scapy","dpkt","zeek","suricata","snort","frr","bird"]},
+"automation": {"nom": "Automatisation / Scripting / RPA",
+"langages": ["python","bash","powershell","javascript","ruby","go"],
+"outils": ["ansible","puppet","chef","n8n","zapier","node-red","selenium","playwright"]},
+"vscode": {"nom": "VS Code Extensions / Outils Éditeur",
+"langages": ["typescript","javascript","json","yaml","php","react"],
+"outils": ["path-intellisense","es7-react-redux","devsense-php","github-actions","prettier","eslint"]},
+}
+
+# ============================================================
+# SECTION 3 · DÉTECTION
+# ============================================================
+def detecter_langage(fichier: str) -> Optional[str]:
+if not fichier: return None
+base = os.path.basename(fichier).lower()
+specials = {"dockerfile":"dockerfile","makefile":"makefile","cmakelists.txt":"cmake",
+"readme":"markdown","license":"text","licence":"text","copying":"text",
+".gitignore":"text",".gitattributes":"text"}
+if base in specials: return specials[base]
+if base.startswith("readme"): return "markdown"
+for ext in sorted(EXT_TO_LANG.keys(), key=len, reverse=True):
+if base.endswith(ext): return EXT_TO_LANG[ext]
+return None
+
+def detecter_niche(langage: str) -> List[str]:
+return [k for k, v in NICHES.items() if langage in v["langages"]]
+
+# ============================================================
+# SECTION 4 · PATTERNS
+# ============================================================
+PATTERNS_SECRETS = [
+(re.compile(r'(?:password|passwd|pwd)\s*[:=]\s*["\']([^"\']{6,})["\']', re.I), "password_hardcoded", "high"),
+(re.compile(r'(?:api[_-]?key|apikey)\s*[:=]\s*["\']([^"\']{12,})["\']', re.I), "api_key_hardcoded", "high"),
+(re.compile(r'(?:secret|token)\s*[:=]\s*["\']([^"\']{12,})["\']', re.I), "secret_hardcoded", "high"),
+(re.compile(r'AKIA[0-9A-Z]{16}'), "aws_access_key", "critical"),
+(re.compile(r'-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----'), "private_key", "critical"),
+(re.compile(r'ghp_[A-Za-z0-9]{36}'), "github_token", "critical"),
+(re.compile(r'gho_[A-Za-z0-9]{36}'), "github_oauth", "critical"),
+(re.compile(r'ghs_[A-Za-z0-9]{36}'), "github_server_token", "critical"),
+(re.compile(r'sk-[A-Za-z0-9]{32,}'), "openai_key", "critical"),
+(re.compile(r'sk-ant-[A-Za-z0-9_-]{32,}'), "anthropic_key", "critical"),
+(re.compile(r'xox[baprs]-[A-Za-z0-9-]{10,}'), "slack_token", "critical"),
+(re.compile(r'AIza[0-9A-Za-z\-_]{35}'), "google_api_key", "critical"),
+(re.compile(r'ya29\.[A-Za-z0-9_-]{32,}'), "google_oauth", "critical"),
+(re.compile(r'eyJ[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}'), "jwt_token", "medium"),
+(re.compile(r'-----BEGIN CERTIFICATE-----'), "certificate", "low"),
+(re.compile(r'ssh-rsa\s+AAAA[A-Za-z0-9+/=]{100,}'), "ssh_key", "medium"),
+(re.compile(r'(?:mongodb|postgres|mysql|redis)://[^\s"\']+:[^\s"\']+@', re.I), "db_uri_with_password", "critical"),
+(re.compile(r'https?://[^\s"\']+:[^\s"\']+@'), "url_with_password", "high"),
+(re.compile(r'\b\d{1,3}(?:\.\d{1,3}){3}\b'), "hardcoded_ip", "low"),
+]
+
+PATTERNS_TODO = [
+(re.compile(r'\bTODO\b'), "TODO", "low"),
+(re.compile(r'\bFIXME\b'), "FIXME", "medium"),
+(re.compile(r'\bXXX\b'), "XXX", "medium"),
+(re.compile(r'\bHACK\b'), "HACK", "medium"),
+(re.compile(r'\bBUG\b'), "BUG", "high"),
+(re.compile(r'\bNOTE\s*:', re.I), "NOTE", "low"),
+(re.compile(r'\bWARNING\s*:', re.I), "WARNING", "low"),
+(re.compile(r'\bDEPRECATED\b'), "DEPRECATED", "medium"),
+]
+
+PATTERNS_DANGER = {
+"python": [
+(re.compile(r'\beval\s*\('), "eval_usage", "high"),
+(re.compile(r'\bexec\s*\('), "exec_usage", "high"),
+(re.compile(r'subprocess\.\w+\([^)]*shell\s*=\s*True'), "shell_injection", "critical"),
+(re.compile(r'pickle\.loads?\s*\('), "pickle_deserialization", "high"),
+(re.compile(r'os\.system\s*\('), "os_system", "high"),
+(re.compile(r'yaml\.load\s*\([^,)]*\)'), "yaml_unsafe", "high"),
+(re.compile(r'__import__\s*\('), "dynamic_import", "medium"),
+(re.compile(r'marshal\.loads?\s*\('), "marshal_deserialization", "high"),
+(re.compile(r'requests\.(?:get|post|put|delete)\([^,)]*verify\s*=\s*False'), "ssl_verify_disabled", "high"),
+],
+"javascript": [
+(re.compile(r'\beval\s*\('), "eval_usage", "high"),
+(re.compile(r'innerHTML\s*='), "xss_innerHTML", "high"),
+(re.compile(r'document\.write\s*\('), "document_write", "medium"),
+(re.compile(r'new\s+Function\s*\('), "function_constructor", "high"),
+(re.compile(r'dangerouslySetInnerHTML'), "react_xss", "high"),
+(re.compile(r'localStorage\.setItem\s*\([^)]*(?:token|password|secret)', re.I), "localstorage_secret", "high"),
+],
+"typescript": [
+(re.compile(r'\beval\s*\('), "eval_usage", "high"),
+(re.compile(r'innerHTML\s*='), "xss_innerHTML", "high"),
+(re.compile(r':\s*any\b'), "any_type", "low"),
+(re.compile(r'@ts-ignore'), "ts_ignore", "medium"),
+(re.compile(r'@ts-nocheck'), "ts_nocheck", "high"),
+],
+"react": [
+(re.compile(r'dangerouslySetInnerHTML'), "react_xss", "high"),
+(re.compile(r'componentWillMount'), "deprecated_lifecycle", "medium"),
+(re.compile(r'componentWillReceiveProps'), "deprecated_lifecycle", "medium"),
+(re.compile(r'componentWillUpdate'), "deprecated_lifecycle", "medium"),
+],
+"php": [
+(re.compile(r'\beval\s*\('), "eval_php", "high"),
+(re.compile(r'\bexec\s*\('), "exec_php", "high"),
+(re.compile(r'\bsystem\s*\('), "system_php", "high"),
+(re.compile(r'\bshell_exec\s*\('), "shell_exec_php", "critical"),
+(re.compile(r'mysql_query\s*\([^)]*\$'), "sql_injection", "critical"),
+(re.compile(r'\bunserialize\s*\('), "php_unserialize", "critical"),
+(re.compile(r'\b\$_GET\s*\['), "get_input", "medium"),
+(re.compile(r'\b\$_POST\s*\['), "post_input", "medium"),
+(re.compile(r'\$_REQUEST\s*\['), "request_input", "high"),
+(re.compile(r'\bmd5\s*\('), "md5_usage", "high"),
+(re.compile(r'\bsha1\s*\('), "sha1_usage", "medium"),
+],
+"github-actions": [
+(re.compile(r'\$\{\{\s*secrets\.'), "secret_reference", "low"),
+(re.compile(r'\$\{\{\s*github\.event\.'), "event_expression", "low"),
+(re.compile(r'pull_request_target'), "pr_target_danger", "critical"),
+(re.compile(r'actions/checkout@v1'), "old_checkout", "medium"),
+(re.compile(r'actions/checkout@v2'), "old_checkout", "medium"),
+(re.compile(r'permissions:\s*write-all'), "write_all_perms", "critical"),
+(re.compile(r'\$\{\{\s*github\.event\.issue\.title\s*\}\}'), "script_injection", "critical"),
+(re.compile(r'\$\{\{\s*github\.event\.pull_request\.title\s*\}\}'), "script_injection", "critical"),
+],
+"java": [
+(re.compile(r'Runtime\.getRuntime\(\)\.exec'), "runtime_exec", "high"),
+(re.compile(r'ProcessBuilder\s*\('), "process_builder", "medium"),
+(re.compile(r'\.executeQuery\s*\([^)]*\+'), "sql_concatenation", "critical"),
+(re.compile(r'ObjectInputStream'), "java_deserialization", "high"),
+(re.compile(r'MessageDigest\.getInstance\s*\(\s*["\']MD5["\']'), "md5_usage", "high"),
+],
+"rust": [
+(re.compile(r'unsafe\s*\{'), "unsafe_block", "medium"),
+(re.compile(r'\.unwrap\(\)'), "unwrap_panic", "low"),
+(re.compile(r'transmute\s*\('), "transmute", "high"),
+],
+"c": [
+(re.compile(r'\bstrcpy\s*\('), "strcpy_unsafe", "high"),
+(re.compile(r'\bgets\s*\('), "gets_unsafe", "critical"),
+(re.compile(r'\bsprintf\s*\('), "sprintf_unsafe", "high"),
+(re.compile(r'\bsystem\s*\('), "system_call", "high"),
+(re.compile(r'\bscanf\s*\('), "scanf_unsafe", "high"),
+],
+"cpp": [
+(re.compile(r'\bstrcpy\s*\('), "strcpy_unsafe", "high"),
+(re.compile(r'\bgets\s*\('), "gets_unsafe", "critical"),
+(re.compile(r'\bsystem\s*\('), "system_call", "high"),
+],
+"csharp": [
+(re.compile(r'\.Invoke\s*\('), "dynamic_invoke_cs", "medium"),
+(re.compile(r'Assembly\.Load'), "assembly_load", "medium"),
+(re.compile(r'Process\.Start'), "process_start_cs", "medium"),
+(re.compile(r'BinaryFormatter'), "binaryformatter", "critical"),
+],
+"ruby": [
+(re.compile(r'\beval\s*\('), "eval_ruby", "high"),
+(re.compile(r'\bsystem\s*\('), "system_ruby", "high"),
+(re.compile(r'`[^`]*#\{'), "backtick_interpolation", "high"),
+(re.compile(r'Marshal\.load'), "marshal_ruby", "critical"),
+],
+"swift": [
+(re.compile(r'unsafeBitCast'), "unsafe_bitcast", "high"),
+(re.compile(r'try\s*!'), "forced_try", "medium"),
+],
+"kotlin": [
+(re.compile(r'!!'), "double_bang", "low"),
+(re.compile(r'Runtime\.getRuntime'), "runtime_kt", "high"),
+],
+"go": [
+(re.compile(r'exec\.Command'), "exec_go", "medium"),
+(re.compile(r'fmt\.Sprintf\s*\([^)]*SELECT', re.I), "sql_concat_go", "high"),
+],
+"sql": [
+(re.compile(r'DROP\s+TABLE', re.I), "drop_table", "critical"),
+(re.compile(r'DELETE\s+FROM\s+\w+\s*;', re.I), "delete_all", "high"),
+(re.compile(r'TRUNCATE\s+TABLE', re.I), "truncate_table", "critical"),
+(re.compile(r'GRANT\s+ALL', re.I), "grant_all", "high"),
+(re.compile(r'xp_cmdshell', re.I), "xp_cmdshell", "critical"),
+],
+"bash": [
+(re.compile(r'\beval\s+'), "eval_bash", "high"),
+(re.compile(r'curl\s+[^|]*\|\s*(?:ba)?sh'), "curl_pipe_sh", "critical"),
+(re.compile(r'wget\s+[^|]*\|\s*(?:ba)?sh'), "wget_pipe_sh", "critical"),
+(re.compile(r'rm\s+-rf\s+/\s'), "rm_rf_root", "critical"),
+(re.compile(r'chmod\s+777'), "chmod_777", "high"),
+],
+"yaml": [
+(re.compile(r'password\s*:\s*\S+', re.I), "yaml_password", "high"),
+(re.compile(r'api[_-]?key\s*:\s*\S+', re.I), "yaml_api_key", "high"),
+(re.compile(r'secret\s*:\s*\S+', re.I), "yaml_secret", "high"),
+],
+"dockerfile": [
+(re.compile(r'USER\s+root'), "docker_root", "medium"),
+(re.compile(r'ADD\s+http'), "docker_add_url", "medium"),
+(re.compile(r'--privileged'), "docker_privileged", "high"),
+],
+"terraform": [
+(re.compile(r'acl\s*=\s*"public-read"'), "s3_public", "critical"),
+(re.compile(r'0\.0\.0\.0/0'), "wide_open_cidr", "high"),
+(re.compile(r'access_key\s*='), "tf_access_key", "critical"),
+],
+"solidity": [
+(re.compile(r'\bdelegatecall\b'), "delegatecall", "high"),
+(re.compile(r'\bselfdestruct\b'), "selfdestruct", "critical"),
+(re.compile(r'\btx\.origin\b'), "tx_origin", "high"),
+(re.compile(r'pragma\s+solidity\s+\^0\.[0-7]\.'), "old_solidity", "high"),
+],
+}
+
+def analyser_code(code: str, langage: str) -> Dict[str, Any]:
+if not code: return {"problemes": [], "metriques": {}}
+lignes = code.split("\n")
+problemes = []
+for pattern, nom, severite in PATTERNS_SECRETS:
+for i, ligne in enumerate(lignes, 1):
+if pattern.search(ligne):
+if any(x in ligne.lower() for x in ["example","placeholder","xxx","your_","<","change_me"]):
+continue
+problemes.append({"type": nom, "severite": severite, "ligne": i, "extrait": ligne.strip()[:120]})
+for pattern, nom, severite in PATTERNS_TODO:
+for i, ligne in enumerate(lignes, 1):
+if pattern.search(ligne):
+problemes.append({"type": nom, "severite": severite, "ligne": i, "extrait": ligne.strip()[:120]})
+lang_key = langage.lower() if langage else ""
+if lang_key in PATTERNS_DANGER:
+for pattern, nom, severite in PATTERNS_DANGER[lang_key]:
+for i, ligne in enumerate(lignes, 1):
+if pattern.search(ligne):
+stripped = ligne.strip()
+if stripped.startswith(("#","//","/*","*","--")): continue
+problemes.append({"type": nom, "severite": severite, "ligne": i, "extrait": stripped[:120]})
+lignes_vides = sum(1 for l in lignes if not l.strip())
+lignes_commentaires = sum(1 for l in lignes if l.strip().startswith(("#","//","/*","*","--","'")))
+lignes_code = len(lignes) - lignes_vides - lignes_commentaires
+complexite = 1
+for l in lignes:
+complexite += len(re.findall(r'\b(?:if|elif|else if|for|while|case|when|catch|except)\b', l))
+complexite += len(re.findall(r'\?[^:]+:', l))
+complexite += len(re.findall(r'&&|\|\|', l))
+fonctions = []
+for i, l in enumerate(lignes, 1):
+m = re.match(r'\s*(?:def|fn|func|function|public|private|protected|static|async|suspend)\s+(\w+)', l)
+if m: fonctions.append({"nom": m.group(1), "ligne": i})
+for i, l in enumerate(lignes):
+if re.search(r'(?:def|fn|func|function)\s+\w+\s*\([^)]*\)\s*(?:->\s*\w+\s*)?\{?\s*$', l.strip()):
+suivantes = lignes[i+1:i+3]
+if all(not s.strip() or s.strip() in ("pass","return","}","...") for s in suivantes):
+problemes.append({"type": "fonction_vide", "severite": "medium", "ligne": i + 1, "extrait": l.strip()[:120]})
+return {
+"problemes": problemes,
+"metriques": {
+"lignes_total": len(lignes), "lignes_vides": lignes_vides,
+"lignes_commentaires": lignes_commentaires, "lignes_code": lignes_code,
+"complexite_cyclomatique": complexite, "fonctions": len(fonctions),
+"fonctions_liste": fonctions[:50], "octets": len(code.encode("utf-8","ignore")),
+},
+}
+
+# ============================================================
+# SECTION 5 · HTTP CLIENT & APIs (avec DuckDuckGo)
+# ============================================================
+HTTP_CACHE = {}
+HTTP_LOCK = threading.Lock()
+
+def http_get(url, headers=None, timeout=10, use_cache=True):
+if use_cache:
+with HTTP_LOCK:
+e = HTTP_CACHE.get(url)
+if e and time.time() - e["ts"] < 300: return e["data"]
+h = {"User-Agent": f"Mozilla/5.0 (compatible; NexusGen/{VERSION})", "Accept": "*/*"}
+if headers: h.update(headers)
+try:
+req = urllib.request.Request(url, headers=h)
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
+with urllib.request.urlopen(req, timeout=timeout, context=ctx) as r:
+data = r.read().decode("utf-8","ignore")
+if use_cache:
+with HTTP_LOCK: HTTP_CACHE[url] = {"data": data, "ts": time.time()}
+return data
+except Exception as e:
+return f'{{"error":"{str(e)[:100]}"}}'
+
+def http_get_json(url, headers=None, timeout=10, use_cache=True):
+raw = http_get(url, headers, timeout, use_cache)
+try: return json.loads(raw)
+except Exception: return {"error": "invalid_json", "raw": raw[:200]}
+
+APIS = {}
+def register_api(name):
+def deco(fn): APIS[name] = fn; return fn
+return deco
+
+@register_api("pypi")
+def _pypi(q, limit=5):
+d = http_get_json(f"https://pypi.org/pypi/{urllib.parse.quote(q)}/json", timeout=8)
+if "info" in d:
+i = d["info"]
+return [{"name": i.get("name"), "version": i.get("version"), "summary": (i.get("summary") or "")[:200], "url": i.get("package_url")}]
+return []
+
+@register_api("npm")
+def _npm(q, limit=5):
+d = http_get_json(f"https://registry.npmjs.org/-/v1/search?text={urllib.parse.quote(q)}&size={limit}")
+if not d or "objects" not in d: return []
+return [{"name": o["package"].get("name"), "version": o["package"].get("version"), "description": (o["package"].get("description") or "")[:200]} for o in d["objects"][:limit]]
+
+@register_api("github")
+def _github(q, limit=5):
+h = {"Accept": "application/vnd.github.v3+json"}
+d = http_get_json(f"https://api.github.com/search/repositories?q={urllib.parse.quote(q)}&per_page={limit}&sort=stars", h)
+if not d or "items" not in d: return []
+return [{"name": i.get("full_name"), "description": (i.get("description") or "")[:200], "url": i.get("html_url"), "stars": i.get("stargazers_count"), "language": i.get("language")} for i in d["items"][:limit]]
+
+@register_api("stackoverflow")
+def _so(q, limit=5):
+url = f"https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=relevance&q={urllib.parse.quote(q)}&site=stackoverflow&pagesize={limit}"
+d = http_get_json(url)
+if not d or "items" not in d: return []
+return [{"title": i.get("title"), "url": i.get("link"), "score": i.get("score"), "answered": i.get("is_answered", False)} for i in d["items"][:limit]]
+
+@register_api("wikipedia")
+def _wiki(q, limit=3):
+url = f"https://fr.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(q)}&srlimit={limit}&format=json"
+d = http_get_json(url)
+if not d or "query" not in d: return []
+return [{"title": i.get("title"), "snippet": re.sub(r"<[^>]+>", "", i.get("snippet", ""))[:300]} for i in d["query"].get("search", [])[:limit]]
+
+@register_api("arxiv")
+def _arxiv(q, limit=5):
+url = f"http://export.arxiv.org/api/query?search_query=all:{urllib.parse.quote(q)}&max_results={limit}"
+raw = http_get(url)
+if raw.startswith('{"error"'): return []
+out = []
+for entry in re.findall(r"<entry>(.*?)</entry>", raw, re.DOTALL)[:limit]:
+t = re.search(r"<title>(.*?)</title>", entry, re.DOTALL)
+if t: out.append({"title": t.group(1).strip()[:150]})
+return out
+
+@register_api("huggingface")
+def _hf(q, limit=5):
+d = http_get_json(f"https://huggingface.co/api/models?search={urllib.parse.quote(q)}&limit={limit}&sort=downloads")
+if not isinstance(d, list): return []
+return [{"id": m.get("id"), "downloads": m.get("downloads", 0), "likes": m.get("likes", 0)} for m in d[:limit]]
+
+@register_api("crates")
+def _crates(q, limit=5):
+d = http_get_json(f"https://crates.io/api/v1/crates?q={urllib.parse.quote(q)}&per_page={limit}")
+if not d or "crates" not in d: return []
+return [{"name": c.get("name"), "description": (c.get("description") or "")[:150]} for c in d["crates"][:limit]]
+
+@register_api("duckduckgo")
+def _ddg(q, limit=10):
+"""DuckDuckGo Instant Answer API — aucune clé requise"""
+try:
+url = f"https://api.duckduckgo.com/?q={urllib.parse.quote(q)}&format=json&no_html=1&skip_disambig=1"
+d = http_get_json(url, timeout=10)
+if not d or "error" in d: return []
+results = []
+if d.get("AbstractText"):
+results.append({
+"title": d.get("Heading", "Résumé"),
+"snippet": d.get("AbstractText", "")[:400],
+"url": d.get("AbstractURL", ""),
+"source": d.get("AbstractSource", "")
+})
+if d.get("Answer"):
+results.append({"title": "Réponse directe", "snippet": str(d["Answer"])[:300], "url": ""})
+for topic in d.get("RelatedTopics", [])[:limit]:
+if isinstance(topic, dict) and "Text" in topic:
+results.append({
+"title": topic.get("Text", "")[:100],
+"snippet": topic.get("Text", "")[:300],
+"url": topic.get("FirstURL", "")
+})
+return results[:limit]
+except Exception as e:
+return [{"error": str(e)[:120]}]
+
+@register_api("duckduckgo-html")
+def _ddg_html(q, limit=10):
+"""DuckDuckGo HTML scraping — plus de résultats"""
+try:
+url = f"https://html.duckduckgo.com/html/?q={urllib.parse.quote(q)}"
+raw = http_get(url, timeout=12)
+if raw.startswith('{"error"'): return []
+results = []
+# Extraction simple des liens
+for m in re.finditer(r'<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>(.*?)</a>', raw, re.DOTALL)[:limit]:
+href = m.group(1)
+title = re.sub(r"<[^>]+>", "", m.group(2)).strip()
+results.append({"title": title[:150], "url": href[:300]})
+# Extraction des snippets
+for m in re.finditer(r'<a[^>]+class="result__snippet"[^>]*>(.*?)</a>', raw, re.DOTALL)[:limit]:
+snippet = re.sub(r"<[^>]+>", "", m.group(1)).strip()
+if len(results) > len([r for r in results if "snippet" in r]):
+for r in results:
+if "snippet" not in r:
+r["snippet"] = snippet[:300]
+break
+return results[:limit]
+except Exception as e:
+return [{"error": str(e)[:120]}]
+
+def search_all_apis(query, max_workers=20):
+results = {}
+with ThreadPoolExecutor(max_workers=max_workers) as ex:
+futures = {ex.submit(fn, query, 3): name for name, fn in APIS.items()}
+for fut in as_completed(futures):
+name = futures[fut]
+try: results[name] = fut.result(timeout=15)
+except Exception as e: results[name] = {"error": str(e)[:120]}
+return results
+
+# ============================================================
+# SECTION 6 · KNOWLEDGE BASE
+# ============================================================
+KNOWLEDGE_FILE = KNOWLEDGE / "knowledge_base.jsonl"
+
+class KnowledgeBase:
+def __init__(self):
+self.items = []
+self.load()
+def load(self):
+if KNOWLEDGE_FILE.exists():
+try:
+with open(KNOWLEDGE_FILE, "r", encoding="utf-8") as f:
+for line in f:
+try: self.items.append(json.loads(line))
+except Exception: continue
+except Exception: pass
+def add(self, item):
+self.items.append(item)
+try:
+with open(KNOWLEDGE_FILE, "a", encoding="utf-8") as f:
+f.write(json.dumps(item, ensure_ascii=False) + "\n")
+except Exception: pass
+def size(self): return len(self.items)
+def search(self, query, limit=20):
+q = query.lower()
+out = []
+for item in self.items:
+if q in json.dumps(item, ensure_ascii=False).lower():
+out.append(item)
+if len(out) >= limit: break
+return out
+
+KB = KnowledgeBase()
+
+def enrichir_kb(query):
+results = search_all_apis(query)
+count = 0
+for api_name, items in results.items():
+if not isinstance(items, list): continue
+for item in items:
+if not isinstance(item, dict): continue
+KB.add({"source": api_name, "query": query, "ts": datetime.datetime.now(datetime.timezone.utc).isoformat(), "data": item})
+count += 1
+return count
+
+# ============================================================
+# SECTION 7 · GÉNÉRATEURS (12 langages)
+# ============================================================
+GENERATEURS = {}
+def register_gen(name):
+def deco(fn): GENERATEURS[name] = fn; return fn
+return deco
+
+@register_gen("python")
+def _gen_python(prompt, port):
+return textwrap.dedent(f'''
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# NEXUS Python — {prompt[:80]}
+import os, sys, json, socket, datetime
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from socketserver import ThreadingMixIn
+VERSION = "{VERSION}"
+PORT = {port}
+BUFFER_SIZE = {BUFFER_SIZE}
+class H(BaseHTTPRequestHandler):
+rbufsize = BUFFER_SIZE
+wbufsize = BUFFER_SIZE
+def log_message(self, *a): pass
+def do_GET(self):
+b = json.dumps({{"version": VERSION, "path": self.path}}).encode()
+self.send_response(200)
+self.send_header("Content-Type", "application/json")
+self.send_header("Content-Length", str(len(b)))
+self.end_headers()
+self.wfile.write(b)
+class S(ThreadingMixIn, HTTPServer):
+daemon_threads = True
+request_queue_size = 1000
+if __name__ == "__main__":
+print("Port", PORT)
+with S(("0.0.0.0", PORT), H) as s:
+s.serve_forever()
+''').strip()
+
+@register_gen("rust")
+def _gen_rust(prompt, port):
+return textwrap.dedent(f'''
+// NEXUS Rust — {prompt[:80]}
+use std::net::{{TcpListener, TcpStream}};
+use std::io::{{Read, Write}};
+use std::thread;
+const PORT: u16 = {port};
+const VERSION: &str = "{VERSION}";
+fn handle(mut s: TcpStream) {{
+let mut buf = [0; {BUFFER_SIZE}];
+if s.read(&mut buf).is_ok() {{
+let body = "{{\\"version\\":\\"{VERSION}\\"}}";
+let resp = format!("HTTP/1.1 200 OK\\r\\nContent-Type: application/json\\r\\nContent-Length: {{}}\\r\\n\\r\\n{{}}", body.len(), body);
+let _ = s.write(resp.as_bytes());
+}}
+}}
+fn main() {{
+let l = TcpListener::bind(format!("0.0.0.0:{{}}", PORT)).unwrap();
+println!("Port {{}}", PORT);
+for s in l.incoming() {{ if let Ok(s) = s {{ thread::spawn(move || handle(s)); }} }}
+}}
+''').strip()
+
+@register_gen("java")
+def _gen_java(prompt, port):
+return textwrap.dedent(f'''
+// NEXUS Java — {prompt[:80]}
+import java.io.*; import java.net.*;
+public class Nexus {{
+public static final int PORT = {port};
+public static void main(String[] a) throws IOException {{
+try (ServerSocket s = new ServerSocket(PORT)) {{
+System.out.println("Port " + PORT);
+while (true) {{ Socket c = s.accept(); new Thread(() -> handle(c)).start(); }}
+}}
+}}
+static void handle(Socket c) {{
+try (PrintWriter o = new PrintWriter(c.getOutputStream())) {{
+String body = "{{\\"version\\":\\"{VERSION}\\"}}";
+o.println("HTTP/1.1 200 OK");
+o.println("Content-Type: application/json");
+o.println("Content-Length: " + body.length());
+o.println();
+o.print(body); o.flush();
+}} catch (Exception e) {{ }}
+}}
+}}
+''').strip()
+
+@register_gen("go")
+def _gen_go(prompt, port):
+return textwrap.dedent(f'''
+// NEXUS Go — {prompt[:80]}
+package main
+import ("fmt"; "net/http")
+func main() {{
+http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {{
+w.Header().Set("Content-Type", "application/json")
+fmt.Fprintf(w, "{{\\"version\\":\\"{VERSION}\\"}}")
+}})
+fmt.Println("Port {port}")
+http.ListenAndServe("0.0.0.0:{port}", nil)
+}}
+''').strip()
+
+@register_gen("c")
+def _gen_c(prompt, port):
+return textwrap.dedent(f'''
+/* NEXUS C — {prompt[:80]} */
+#include <stdio.h> #include <string.h> #include <sys/socket.h> #include <netinet/in.h> #include <unistd.h>
+#define PORT {port}
+#define VERSION "{VERSION}"
+int main(void) {{
+int s = socket(AF_INET, SOCK_STREAM, 0);
+int opt = 1; setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+struct sockaddr_in a = {{0}};
+a.sin_family = AF_INET; a.sin_addr.s_addr = INADDR_ANY; a.sin_port = htons(PORT);
+bind(s, (struct sockaddr*)&a, sizeof(a)); listen(s, 100);
+printf("Port %d\\n", PORT);
+while (1) {{
+int c = accept(s, NULL, NULL); if (c < 0) continue;
+char body[128]; snprintf(body, sizeof(body), "{{\\"version\\":\\"%s\\"}}", VERSION);
+char resp[512];
+snprintf(resp, sizeof(resp), "HTTP/1.1 200 OK\\r\\nContent-Type: application/json\\r\\nContent-Length: %zu\\r\\n\\r\\n%s", strlen(body), body);
+write(c, resp, strlen(resp)); close(c);
+}}
+}}
+''').strip()
+
+@register_gen("cpp")
+def _gen_cpp(prompt, port):
+return textwrap.dedent(f'''
+// NEXUS C++ — {prompt[:80]}
+#include <iostream> #include <string> #include <sys/socket.h> #include <netinet/in.h> #include <unistd.h>
+constexpr int PORT = {port};
+constexpr const char* VERSION = "{VERSION}";
+int main() {{
+int s = socket(AF_INET, SOCK_STREAM, 0);
+int opt = 1; setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+sockaddr_in a{{}};
+a.sin_family = AF_INET; a.sin_addr.s_addr = INADDR_ANY; a.sin_port = htons(PORT);
+bind(s, reinterpret_cast<sockaddr*>(&a), sizeof(a)); listen(s, 100);
+std::cout << "Port " << PORT << std::endl;
+while (true) {{
+int c = accept(s, nullptr, nullptr);
+std::string body = std::string("{{\\"version\\":\\"") + VERSION + "\\"}}";
+std::string resp = "HTTP/1.1 200 OK\\r\\nContent-Type: application/json\\r\\nContent-Length: " + std::to_string(body.size()) + "\\r\\n\\r\\n" + body;
+write(c, resp.c_str(), resp.size()); close(c);
+}}
+}}
+''').strip()
+
+@register_gen("csharp")
+def _gen_csharp(prompt, port):
+return textwrap.dedent(f'''
+// NEXUS C# — {prompt[:80]}
+using System; using System.Net; using System.Text;
+class Nexus {{
+static void Main() {{
+var l = new HttpListener();
+l.Prefixes.Add("http://*:{port}/"); l.Start();
+Console.WriteLine("Port {port}");
+while (true) {{
+var c = l.GetContext();
+var body = Encoding.UTF8.GetBytes("{{\\"version\\":\\"{VERSION}\\"}}");
+c.Response.ContentType = "application/json";
+c.Response.OutputStream.Write(body, 0, body.Length);
+c.Response.Close();
+}}
+}}
+}}
+''').strip()
+
+@register_gen("ruby")
+def _gen_ruby(prompt, port):
+return textwrap.dedent(f'''
+#!/usr/bin/env ruby
+# NEXUS Ruby — {prompt[:80]}
+require 'json'; require 'socket'
+PORT = {port}
+server = TCPServer.new('0.0.0.0', PORT)
+puts "Port #{{PORT}}"
+loop do
+c = server.accept
+body = {{version: '{VERSION}'}}.to_json
+c.write("HTTP/1.1 200 OK\\r\\nContent-Type: application/json\\r\\nContent-Length: #{{body.bytesize}}\\r\\n\\r\\n#{{body}}")
+c.close
+end
+''').strip()
+
+@register_gen("php")
+def _gen_php(prompt, port):
+return textwrap.dedent(f'''<?php
+// NEXUS PHP — {prompt[:80]}
+header('Content-Type: application/json');
+echo json_encode(['version' => '{VERSION}', 'php' => PHP_VERSION], JSON_PRETTY_PRINT);
+''').strip()
+
+@register_gen("swift")
+def _gen_swift(prompt, port):
+return textwrap.dedent(f'''
+// NEXUS Swift — {prompt[:80]}
+import Foundation
+import Network
+let port: UInt16 = {port}
+let listener = try! NWListener(using: .tcp, on: NWEndpoint.Port(rawValue: port)!)
+listener.newConnectionHandler = {{ conn in
+conn.start(queue: .main)
+let body = "{{\\"version\\":\\"{VERSION}\\"}}"
+let data = body.data(using: .utf8)!
+conn.send(content: data, completion: .contentProcessed({{ _ in conn.cancel() }}))
+}}
+listener.start(queue: .main)
+print("Port \\(port)")
+RunLoop.main.run()
+''').strip()
+
+@register_gen("kotlin")
+def _gen_kotlin(prompt, port):
+return textwrap.dedent(f'''
+// NEXUS Kotlin — {prompt[:80]}
+import java.net.ServerSocket
+import java.io.PrintWriter
+const val PORT = {port}
+const val VERSION = "{VERSION}"
+fun main() {{
+val server = ServerSocket(PORT)
+println("Port $PORT")
+while (true) {{
+val client = server.accept()
+PrintWriter(client.getOutputStream()).use {{ out ->
+val body = "{{\\"version\\":\\"$VERSION\\"}}"
+out.println("HTTP/1.1 200 OK")
+out.println("Content-Type: application/json")
+out.println("Content-Length: ${{body.length}}")
+out.println()
+out.print(body); out.flush()
+}}
+client.close()
+}}
+}}
+''').strip()
+
+@register_gen("typescript")
+def _gen_typescript(prompt, port):
+return textwrap.dedent(f'''
+// NEXUS TypeScript — {prompt[:80]}
+import * as http from "http";
+const PORT = {port};
+const VERSION = "{VERSION}";
+const server = http.createServer((req, res) => {{
+res.writeHead(200, {{ "Content-Type": "application/json" }});
+res.end(JSON.stringify({{ version: VERSION, path: req.url }}));
+}});
+server.listen(PORT, "0.0.0.0", () => {{ console.log(`Port ${{PORT}}`); }});
+''').strip()
+
+def generer_script(prompt, langage, port):
+if langage in GENERATEURS:
+return GENERATEURS[langage](prompt, port)
+return GENERATEURS["python"](prompt, port)
+
+# ============================================================
+# SECTION 8 · HTML UI
+# ============================================================
+HTML_UI = r"""<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NEXUS GEN v__V__ — Port 2400</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,system-ui,sans-serif;background:#050810;color:#c8e0f8;padding:20px;min-height:100vh;background-image:radial-gradient(ellipse at top,rgba(0,150,255,0.08),transparent 60%)}
+.container{max-width:1400px;margin:0 auto}
+h1{font-size:clamp(20px,4vw,32px);font-weight:800;letter-spacing:-1.5px;background:linear-gradient(135deg,#00d4ff,#a855f7,#ff0080);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.subtitle{color:#5a7898;font-size:12px;font-family:ui-monospace,monospace;margin-bottom:20px}
+.panel{background:rgba(8,15,25,0.9);border:1px solid #1a3a5a;border-radius:14px;padding:20px;margin-bottom:14px}
+.panel h2{color:#00d4ff;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #1a3a5a}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:rgba(0,0,0,0.5);border:1px solid #1a3a5a;border-radius:10px;padding:12px}
+.stat-lbl{color:#5a7898;font-size:10px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.stat-val{color:#00d4ff;font-size:20px;font-weight:800;font-family:ui-monospace,monospace}
+.stat-val.warn{color:#ffaa00}
+.stat-val.danger{color:#ff3366}
+.stat-val.ok{color:#00ff88}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:11px;color:#5a7898;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
+.form-group input,.form-group textarea,.form-group select{width:100%;padding:11px 14px;background:rgba(0,0,0,0.6);border:1px solid #1a3a5a;border-radius:9px;color:#c8e0f8;font-size:13px;font-family:inherit;outline:none}
+.form-group textarea{min-height:120px;max-height:600px;resize:vertical;font-family:ui-monospace,monospace}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:#00d4ff}
+.btn{background:linear-gradient(135deg,#00d4ff,#a855f7);color:#000;border:none;padding:12px 22px;border-radius:10px;font-weight:800;cursor:pointer;font-family:ui-monospace,monospace;font-size:12px;letter-spacing:1px;margin-right:6px;margin-bottom:6px;text-transform:uppercase}
+.btn:hover{opacity:0.9}
+.btn.sec{background:transparent;color:#00d4ff;border:1px solid #00d4ff}
+.btn.green{background:linear-gradient(135deg,#00ff88,#00d4ff);color:#000}
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.preset{padding:6px 12px;background:rgba(0,212,255,0.1);border:1px solid #1a3a5a;color:#00d4ff;border-radius:20px;font-size:10px;cursor:pointer;font-family:ui-monospace,monospace}
+.preset:hover{background:rgba(0,212,255,0.2)}
+.result{background:rgba(0,0,0,0.7);border:1px solid #1a3a5a;border-radius:10px;padding:16px;font-family:ui-monospace,monospace;font-size:12px;color:#00ffc8;white-space:pre-wrap;word-break:break-word;max-height:800px;overflow:auto;line-height:1.6;margin-top:12px}
+.tabs{display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid #1a3a5a;flex-wrap:wrap}
+.tab{padding:8px 16px;background:transparent;border:none;color:#5a7898;font-family:ui-monospace,monospace;font-size:12px;cursor:pointer;border-bottom:2px solid transparent}
+.tab.active{color:#00d4ff;border-bottom-color:#00d4ff}
+.prob{padding:10px 12px;border-left:3px solid #ff3366;background:rgba(255,51,102,0.05);margin-bottom:6px;border-radius:0 6px 6px 0;font-size:12px}
+.prob.critical{border-left-color:#ff0000;background:rgba(255,0,0,0.1)}
+.prob.high{border-left-color:#ff3366}
+.prob.medium{border-left-color:#ffaa00;background:rgba(255,170,0,0.05)}
+.prob.low{border-left-color:#00d4ff;background:rgba(0,212,255,0.05)}
+.prob-type{color:#00d4ff;font-weight:800;font-family:ui-monospace,monospace}
+.prob-file{color:#5a7898;font-size:10px;font-family:ui-monospace,monospace}
+.footer{text-align:center;color:#2a3a5a;font-size:11px;margin-top:30px;font-family:ui-monospace,monospace}
+.loader{text-align:center;padding:30px;color:#00d4ff}
+.spinner{display:inline-block;width:30px;height:30px;border:3px solid rgba(0,212,255,0.3);border-top-color:#00d4ff;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.niche{padding:8px 12px;background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.3);border-radius:8px;margin-bottom:6px;font-size:11px}
+.niche b{color:#a855f7}
+.badge{display:inline-block;padding:3px 10px;background:rgba(0,212,255,0.15);border:1px solid #00d4ff;color:#00d4ff;border-radius:20px;font-size:10px;font-family:ui-monospace,monospace;margin-left:8px}
+.badge.ddg{background:rgba(222,88,63,0.15);border-color:#de583f;color:#de583f}
+.badge.react{background:rgba(97,218,251,0.15);border-color:#61dafb;color:#61dafb}
+.badge.php{background:rgba(119,123,180,0.15);border-color:#777bb4;color:#777bb4}
+.badge.gh{background:rgba(36,41,47,0.3);border-color:#7b8496;color:#c9d1d9}
+</style></head><body>
+<div class="container">
+<h1>NEXUS GEN <span class="badge">PORT 2400</span> <span class="badge">BUFFER 100K</span> <span class="badge ddg">DUCKDUCKGO</span> <span class="badge react">REACT</span> <span class="badge php">PHP</span> <span class="badge gh">GH ACTIONS</span></h1>
+<div class="subtitle">__LANG__ langages · __EXT__ extensions · __API__ APIs · __NICHE__ niches · __GEN__ générateurs · v__V__</div>
+
+<div class="panel">
+<h2>Générer un template</h2>
+<div class="form-group">
+<label>Prompt (éditeur 100 000 caractères)</label>
+<textarea id="gen-prompt" maxlength="100000" placeholder="Décris ton projet...">Serveur API REST avec endpoint /health</textarea>
+</div>
+<div class="form-group">
+<label>Langage</label>
+<select id="gen-lang">
+<option>python</option><option>rust</option><option>java</option><option>go</option>
+<option>c</option><option>cpp</option><option>csharp</option><option>ruby</option>
+<option>php</option><option>swift</option><option>kotlin</option><option>typescript</option>
+</select>
+</div>
+<div class="form-group">
+<label>Port de sortie</label>
+<input id="gen-port" type="number" value="8096">
+</div>
+<button class="btn" onclick="generer()">GÉNÉRER</button>
+</div>
+
+<div class="panel">
+<h2>Analyser un dossier</h2>
+<div class="presets">
+<div class="preset" onclick="setPath('.')">Courant</div>
+<div class="preset" onclick="setPath('/Users')">/Users</div>
+<div class="preset" onclick="setPath('/etc')">/etc</div>
+<div class="preset" onclick="setPath('/opt')">/opt</div>
+</div>
+<div class="form-group">
+<label>Chemin</label>
+<input id="path" value=".">
+</div>
+<button class="btn" onclick="analyser()">ANALYSER</button>
+</div>
+
+<div class="panel">
+<h2>Recherche multi-source (DuckDuckGo inclus)</h2>
+<div class="form-group">
+<label>Query</label>
+<input id="query" value="react hooks best practices">
+</div>
+<button class="btn" onclick="rechercher()">RECHERCHER</button>
+<button class="btn green" onclick="enrichir()">ENRICHIR KB</button>
+<button class="btn sec" onclick="ddgOnly()">DUCKDUCKGO ONLY</button>
+</div>
+
+<div class="panel" id="result-panel" style="display:none">
+<h2>Résultats</h2>
+<div class="grid" id="stats"></div>
+<div class="tabs">
+<button class="tab active" onclick="showTab('problemes')">Résultats</button>
+<button class="tab" onclick="showTab('langages')">Langages</button>
+<button class="tab" onclick="showTab('niches')">Niches</button>
+<button class="tab" onclick="showTab('json')">JSON</button>
+</div>
+<div id="tab-problemes"></div>
+<div id="tab-langages" style="display:none"></div>
+<div id="tab-niches" style="display:none"></div>
+<div class="result" id="tab-json" style="display:none"></div>
+</div>
+
+<div class="footer">NEXUS GEN v__V__ · __AUTEUR__ · __LIC__ · Port 2400 · Buffer 100K · DuckDuckGo + 8 APIs</div>
+</div>
+
+<script>
+function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function setPath(p){document.getElementById('path').value = p;}
+
+async function generer(){
+var prompt = document.getElementById('gen-prompt').value;
+var lang = document.getElementById('gen-lang').value;
+var port = parseInt(document.getElementById('gen-port').value) || 8096;
+if(!prompt.trim()) return;
+try{
+var r = await fetch('/api/generate', {
+method:'POST', headers:{'Content-Type':'application/json'},
+body: JSON.stringify({prompt: prompt.substring(0, 100000), langage: lang, port: port})
+});
+var d = await r.json();
+document.getElementById('result-panel').style.display = 'block';
+document.getElementById('stats').innerHTML = '<div class="stat"><div class="stat-lbl">Langage</div><div class="stat-val">' + esc(d.langage) + '</div></div><div class="stat"><div class="stat-lbl">Lignes</div><div class="stat-val">' + (d.lignes||0) + '</div></div><div class="stat"><div class="stat-lbl">Buffer</div><div class="stat-val ok">100k</div></div>';
+document.getElementById('tab-problemes').innerHTML = '<div class="result">' + esc(d.code||'') + '</div>';
+showTab('problemes');
+}catch(e){}
+}
+
+async function analyser(){
+var p = document.getElementById('path').value.trim();
+if(!p){ alert('Chemin requis'); return; }
+document.getElementById('result-panel').style.display = 'block';
+document.getElementById('stats').innerHTML = '<div class="loader"><div class="spinner"></div><div>Analyse...</div></div>';
+try{
+var r = await fetch('/api/analyze', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path: p})});
+var d = await r.json();
+afficherAnalyse(d);
+}catch(e){
+document.getElementById('stats').innerHTML = '<div class="result">Erreur : ' + esc(e.message) + '</div>';
+}
+}
+
+function afficherAnalyse(d){
+var h = '';
+h += '<div class="stat"><div class="stat-lbl">Fichiers</div><div class="stat-val">' + (d.fichiers_total||0) + '</div></div>';
+h += '<div class="stat"><div class="stat-lbl">Analysés</div><div class="stat-val ok">' + (d.fichiers_analyses||0) + '</div></div>';
+h += '<div class="stat"><div class="stat-lbl">Lignes</div><div class="stat-val">' + ((d.stats_globales||{}).lignes_total||0) + '</div></div>';
+h += '<div class="stat"><div class="stat-lbl">Problèmes</div><div class="stat-val warn">' + (d.problemes_total||0) + '</div></div>';
+document.getElementById('stats').innerHTML = h;
+var probs = d.problemes || [];
+if(!probs.length){
+document.getElementById('tab-problemes').innerHTML = '<div class="prob low">Aucun problème détecté ✓</div>';
+} else {
+var ph = '';
+probs.slice(0, 500).forEach(function(p){
+ph += '<div class="prob ' + esc(p.severite) + '">';
+ph += '<span class="prob-type">[' + esc(p.severite.toUpperCase()) + '] ' + esc(p.type) + '</span>';
+ph += ' <span class="prob-file">' + esc(p.fichier||'') + ':' + (p.ligne||'?') + '</span>';
+ph += '<div style="margin-top:4px;color:#a0b8d0">' + esc(p.extrait||'') + '</div>';
+ph += '</div>';
+});
+document.getElementById('tab-problemes').innerHTML = ph;
+}
+document.getElementById('tab-json').textContent = JSON.stringify(d, null, 2);
+showTab('problemes');
+}
+
+function showTab(name){
+document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+document.querySelectorAll('.tab').forEach(function(t){
+if(t.textContent.toLowerCase().indexOf(name) !== -1) t.classList.add('active');
+});
+['problemes','langages','niches','json'].forEach(function(k){
+var el = document.getElementById('tab-'+k);
+if(el) el.style.display = k === name ? 'block' : 'none';
+});
+}
+
+async function rechercher(){
+var q = document.getElementById('query').value.trim();
+if(!q) return;
+document.getElementById('result-panel').style.display = 'block';
+document.getElementById('stats').innerHTML = '<div class="loader"><div class="spinner"></div><div>Recherche multi-source...</div></div>';
+try{
+var r = await fetch('/api/search?q=' + encodeURIComponent(q));
+var d = await r.json();
+var results = d.results || {};
+var h = '';
+var total = 0;
+for(var k in results){
+var v = results[k];
+var count = Array.isArray(v) ? v.length : 0;
+total += count;
+h += '<div style="padding:10px 0;border-bottom:1px solid #1a3a5a">';
+h += '<b style="color:#00d4ff">' + esc(k) + '</b> <span style="color:#5a7898">(' + count + ')</span>';
+if(Array.isArray(v) && v.length){
+h += '<div style="margin-top:6px;font-size:11px;color:#a0b8d0">';
+v.slice(0,5).forEach(function(item){
+if(typeof item === 'object'){
+var t = item.title || item.name || item.id || item.label || '';
+var u = item.url || item.link || item.html_url || '';
+var s = item.snippet || item.description || item.summary || '';
+h += '<div style="margin-bottom:4px">· <b>' + esc(t).substring(0,100) + '</b>';
+if(s) h += '<br><span style="color:#708898">' + esc(s).substring(0,150) + '</span>';
+if(u) h += '<br><a href="' + esc(u) + '" target="_blank" style="color:#00d4ff">' + esc(u).substring(0,80) + '</a>';
+h += '</div>';
+}
+});
+h += '</div>';
+}
+h += '</div>';
+}
+document.getElementById('stats').innerHTML = '<div class="stat"><div class="stat-lbl">APIs</div><div class="stat-val">' + Object.keys(results).length + '</div></div><div class="stat"><div class="stat-lbl">Items</div><div class="stat-val">' + total + '</div></div>';
+document.getElementById('tab-problemes').innerHTML = h || 'Aucun résultat';
+showTab('problemes');
+}catch(e){}
+}
+
+async function ddgOnly(){
+var q = document.getElementById('query').value.trim();
+if(!q) return;
+document.getElementById('result-panel').style.display = 'block';
+document.getElementById('stats').innerHTML = '<div class="loader"><div class="spinner"></div><div>DuckDuckGo...</div></div>';
+try{
+var r = await fetch('/api/ddg?q=' + encodeURIComponent(q));
+var d = await r.json();
+var items = d.results || [];
+var h = '<div style="color:#de583f;font-weight:bold;margin-bottom:10px">🦆 DuckDuckGo — ' + items.length + ' résultats</div>';
+items.forEach(function(item){
+h += '<div class="prob low" style="border-left-color:#de583f">';
+h += '<b style="color:#de583f">' + esc(item.title||'') + '</b><br>';
+if(item.snippet) h += '<span style="color:#a0b8d0">' + esc(item.snippet) + '</span><br>';
+if(item.url) h += '<a href="' + esc(item.url) + '" target="_blank" style="color:#00d4ff">' + esc(item.url) + '</a>';
+h += '</div>';
+});
+document.getElementById('stats').innerHTML = '<div class="stat"><div class="stat-lbl">Source</div><div class="stat-val" style="color:#de583f">DDG</div></div><div class="stat"><div class="stat-lbl">Résultats</div><div class="stat-val">' + items.length + '</div></div>';
+document.getElementById('tab-problemes').innerHTML = h || 'Aucun résultat';
+showTab('problemes');
+}catch(e){}
+}
+
+async function enrichir(){
+var q = document.getElementById('query').value.trim();
+if(!q) return;
+document.getElementById('result-panel').style.display = 'block';
+try{
+var r = await fetch('/api/enrich?q=' + encodeURIComponent(q));
+var d = await r.json();
+document.getElementById('stats').innerHTML = '<div class="stat"><div class="stat-lbl">Ajoutés</div><div class="stat-val ok">' + (d.added||0) + '</div></div><div class="stat"><div class="stat-lbl">KB total</div><div class="stat-val">' + (d.kb_size||0) + '</div></div>';
+document.getElementById('tab-problemes').innerHTML = '<div class="prob low">KB enrichie avec ' + (d.added||0) + ' items.</div>';
+showTab('problemes');
+}catch(e){}
+}
+</script></body></html>
+"""
+
+# ============================================================
+# SECTION 9 · HANDLER
+# ============================================================
+class Handler(BaseHTTPRequestHandler):
+rbufsize = BUFFER_SIZE
+wbufsize = BUFFER_SIZE
+def log_message(self, *a): pass
+def _send(self, code, body, ctype="application/json"):
+try:
+if isinstance(body, str):
+body = body.encode("utf-8")
+self.send_response(code)
+self.send_header("Content-Type", ctype + "; charset=utf-8")
+self.send_header("Access-Control-Allow-Origin", "*")
+self.send_header("Content-Length", str(len(body)))
+self.send_header("X-Buffer-Size", str(BUFFER_SIZE))
+self.send_header("X-Editor-Size", str(EDITOR_SIZE))
+self.end_headers()
+for i in range(0, len(body), BUFFER_SIZE):
+self.wfile.write(body[i:i+BUFFER_SIZE])
+self.wfile.flush()
+except (BrokenPipeError, ConnectionResetError):
+pass
+def _read_json(self):
+try:
+n = int(self.headers.get("Content-Length", "0"))
+if n > BUFFER_SIZE:
+chunks = []
+remaining = n
+while remaining > 0:
+chunk = self.rfile.read(min(BUFFER_SIZE, remaining))
+if not chunk: break
+chunks.append(chunk); remaining -= len(chunk)
+raw = b"".join(chunks)
+else:
+raw = self.rfile.read(n)
+return json.loads(raw.decode("utf-8"))
+except Exception:
+return {}
+def do_GET(self):
+p = self.path.split("?")[0]
+qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+
+if p in ("/", "/index.html"):
+html = (HTML_UI.replace("__V__", VERSION)
+.replace("__LANG__", str(len(LANGAGES_SUPPORTES)))
+.replace("__EXT__", str(TOTAL_EXTENSIONS))
+.replace("__API__", str(len(APIS)))
+.replace("__NICHE__", str(len(NICHES)))
+.replace("__GEN__", str(len(GENERATEURS)))
+.replace("__AUTEUR__", AUTEUR)
+.replace("__LIC__", LICENCE))
+return self._send(200, html, "text/html")
+
+if p == "/api/health":
+return self._send(200, json.dumps({
+"ok": True, "version": VERSION, "author": AUTEUR,
+"port": PORT, "buffer_size": BUFFER_SIZE, "editor_size": EDITOR_SIZE,
+"langages": len(LANGAGES_SUPPORTES), "extensions": TOTAL_EXTENSIONS,
+"apis": list(APIS.keys()), "niches": len(NICHES), "kb_size": KB.size(),
+"generateurs": list(GENERATEURS.keys()),
+}))
+
+if p == "/api/buffer":
+return self._send(200, json.dumps({
+"buffer_size": BUFFER_SIZE, "editor_size": EDITOR_SIZE,
+"rbufsize": self.rbufsize, "wbufsize": self.wbufsize,
+"status": "✅ Buffer 100 000 octets"
+}))
+
+if p == "/api/languages":
+return self._send(200, json.dumps({"languages": LANGAGES_SUPPORTES}))
+
+if p == "/api/niches":
+return self._send(200, json.dumps({"niches": NICHES}))
+
+if p == "/api/apis":
+return self._send(200, json.dumps({"apis": list(APIS.keys())}))
+
+if p == "/api/kb":
+return self._send(200, json.dumps({"size": KB.size(), "recent": KB.items[-20:]}, ensure_ascii=False, default=str))
+
+if p == "/api/search":
+q = qs.get("q", [""])[0]
+if not q: return self._send(400, json.dumps({"error": "q manquant"}))
+results = search_all_apis(q)
+return self._send(200, json.dumps({"query": q, "results": results, "count": len(results)}, ensure_ascii=False, default=str))
+
+if p == "/api/ddg":
+q = qs.get("q", [""])[0]
+if not q: return self._send(400, json.dumps({"error": "q manquant"}))
+results = _ddg(q) + _ddg_html(q)
+return self._send(200, json.dumps({"query": q, "results": results, "count": len(results)}, ensure_ascii=False))
+
+if p == "/api/enrich":
+q = qs.get("q", [""])[0]
+if not q: return self._send(400, json.dumps({"error": "q manquant"}))
+added = enrichir_kb(q)
+return self._send(200, json.dumps({"query": q, "added": added, "kb_size": KB.size()}))
+
+return self._send(404, json.dumps({"error": "not found"}))
+
+def do_POST(self):
+p = self.path.split("?")[0]
+data = self._read_json()
+
+if p == "/api/generate":
+prompt = data.get("prompt", "").strip()[:EDITOR_SIZE]
+langage = data.get("langage", "python").lower()
+port = int(data.get("port", 8096))
+if not prompt: return self._send(400, json.dumps({"error": "prompt manquant"}))
+code = generer_script(prompt, langage, port)
+return self._send(200, json.dumps({
+"ok": True, "langage": langage, "port": port,
+"code": code, "lignes": code.count("\n"),
+"buffer": BUFFER_SIZE, "editor": EDITOR_SIZE,
+}, ensure_ascii=False))
+
+if p == "/api/analyze":
+path = data.get("path", ".")
+return self._send(200, json.dumps({
+"fichiers_total": 0, "fichiers_analyses": 0,
+"stats_globales": {"lignes_total": 0},
+"problemes_total": 0, "problemes": [],
+"path": path, "note": "Analyse à venir",
+}))
+
+return self._send(404, json.dumps({"error": "not found"}))
+
+class Server(ThreadingMixIn, HTTPServer):
+daemon_threads = True
+allow_reuse_address = True
+request_queue_size = 1000
+
+# ============================================================
+# MAIN
+# ============================================================
+def ip_locale():
+try:
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(("8.8.8.8", 80))
+ip = s.getsockname()[0]; s.close(); return ip
+except Exception:
+return "localhost"
+
+def main():
+print("=" * 72)
+print(f" 🧬 NEXUS GEN v{VERSION} — PORT {PORT} · BUFFER {BUFFER_SIZE}")
+print(f" {AUTEUR} · {LICENCE}")
+print("=" * 72)
+print()
+print(f" Port : {PORT}")
+print(f" Buffer : {BUFFER_SIZE} octets")
+print(f" Éditeur : {EDITOR_SIZE} caractères")
+print(f" Langages : {len(LANGAGES_SUPPORTES)}")
+print(f" Extensions : {TOTAL_EXTENSIONS}")
+print(f" Niches : {len(NICHES)}")
+print(f" APIs : {len(APIS)} → {', '.join(sorted(APIS.keys()))}")
+print(f" Générateurs : {len(GENERATEURS)}")
+print(f" KB size : {KB.size()} items")
+print()
+print(f" Local : http://localhost:{PORT}/")
+print(f" Réseau : http://{ip_locale()}:{PORT}/")
+print()
+print(" Endpoints :")
+print(" GET /api/health")
+print(" GET /api/buffer ← buffer 100k")
+print(" GET /api/languages")
+print(" GET /api/niches")
+print(" GET /api/apis")
+print(" GET /api/kb")
+print(" GET /api/search?q=react+hooks")
+print(" GET /api/ddg?q=react+hooks ← DuckDuckGo")
+print(" GET /api/enrich?q=php+laravel")
+print(" POST /api/generate {prompt, langage, port}")
+print(" POST /api/analyze {path}")
+print()
+print(f" Générateurs : {', '.join(sorted(GENERATEURS.keys()))}")
+print()
+print(" Ctrl+C pour arrêter")
+print()
+
+try:
+with Server(("0.0.0.0", PORT), Handler) as httpd:
+httpd.serve_forever()
+except KeyboardInterrupt:
+print("\n Arrêté.")
+except OSError as e:
+print(f" Erreur port {PORT} : {e}")
+sys.exit(1)
+
+if __name__ == "__main__":
+try:
+main()
+except Exception as e:
+print(f"Fatal : {e}", file=sys.stderr)
+sys.exit(1)
